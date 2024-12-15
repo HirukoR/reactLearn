@@ -121,7 +121,7 @@ const App = () => {
 
 const AppWrapper = () => {
   return (
-    <Router>
+    <Router basename="/reactLearn">
       <CustomThemeProvider>
         <AuthProvider>
           <App />
