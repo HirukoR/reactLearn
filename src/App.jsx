@@ -10,10 +10,11 @@ import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import MainLayout from './layouts/MainLayout';
 import { ThemeProvider as CustomThemeProvider, useTheme } from './contexts/ThemeContext';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 const App = () => {
   const { isDarkMode } = useTheme();
+  const { currentUser } = useAuth();
 
   const theme = createTheme({
     palette: {
@@ -72,10 +73,46 @@ const App = () => {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="profile" element={<Profile />} />
+        <Route
+          path="/"
+          element={
+            currentUser ? (
+              <MainLayout />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        >
+          <Route
+            path="dashboard"
+            element={
+              currentUser ? (
+                <Dashboard />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="profile"
+            element={
+              currentUser ? (
+                <Profile />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            index
+            element={
+              currentUser ? (
+                <Navigate to="/dashboard" replace />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
         </Route>
       </Routes>
     </MuiThemeProvider>
