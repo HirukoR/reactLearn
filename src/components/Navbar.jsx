@@ -25,8 +25,10 @@ import {
   FaTimes,
   FaSun,
   FaMoon,
+  FaCalendarAlt
 } from 'react-icons/fa';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -35,6 +37,7 @@ const Navbar = () => {
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('sm'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isDarkMode, toggleTheme } = useTheme();
+  const { currentUser } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -46,6 +49,7 @@ const Navbar = () => {
 
   const menuItems = [
     { text: 'Главная', icon: <FaHome />, path: '/dashboard' },
+    { text: 'Календарь', icon: <FaCalendarAlt />, path: '/calendar' },
     { text: 'Профиль', icon: <FaUser />, path: '/profile' },
   ];
 
@@ -70,8 +74,7 @@ const Navbar = () => {
       <List>
         {menuItems.map((item) => (
           <ListItem
-            button
-            key={item.text}
+            component="div"
             onClick={() => navigate(item.path)}
             selected={location.pathname === item.path}
             sx={{
@@ -84,6 +87,7 @@ const Navbar = () => {
                   backgroundColor: 'primary.light',
                 },
               },
+              cursor: 'pointer',
             }}
           >
             <ListItemIcon sx={{ minWidth: 40 }}>
@@ -166,6 +170,7 @@ const Navbar = () => {
                   </Button>
                 ))}
                 <Avatar
+                  src={currentUser?.avatar}
                   sx={{
                     width: 35,
                     height: 35,
@@ -174,7 +179,7 @@ const Navbar = () => {
                   }}
                   onClick={() => navigate('/profile')}
                 >
-                  U
+                  {currentUser?.name ? currentUser.name[0].toUpperCase() : 'U'}
                 </Avatar>
                 <Button
                   color="primary"

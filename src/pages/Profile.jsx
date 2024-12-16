@@ -1,268 +1,176 @@
-import { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Paper,
-  Typography,
   TextField,
   Button,
-  Box,
   Avatar,
-  Alert,
-  IconButton,
-  useTheme,
+  Typography,
+  Box,
+  Grid,
+  Link,
+  IconButton
 } from '@mui/material';
-import { motion } from 'framer-motion';
-import { FaUser, FaCamera, FaKey } from 'react-icons/fa';
+import { GitHub as GitHubIcon, Edit as EditIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
 const Profile = () => {
-  const theme = useTheme();
-  const { currentUser, updateProfile, updatePassword } = useAuth();
-  const fileInputRef = useRef();
-  
-  const [profile, setProfile] = useState({
-    name: currentUser?.name || '',
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  });
-  
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const { currentUser, updateUser } = useAuth();
+  const [avatar, setAvatar] = useState(currentUser?.avatar || '');
+  const [name, setName] = useState(currentUser?.name || '');
+  const [email, setEmail] = useState(currentUser?.email || '');
+  const [github, setGithub] = useState(currentUser?.github || '');
+  const [education, setEducation] = useState(currentUser?.education || '');
+  const [about, setAbout] = useState(currentUser?.about || '');
+  const [isEditing, setIsEditing] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setProfile(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    try {
-      await updateProfile(currentUser.id, { name: profile.name });
-      setMessage({ type: 'success', text: 'Профиль успешно обновлен!' });
-    } catch (err) {
-      setMessage({ type: 'error', text: err.message });
+  useEffect(() => {
+    if (currentUser) {
+      setAvatar(currentUser.avatar || '');
+      setName(currentUser.name || '');
+      setEmail(currentUser.email || '');
+      setGithub(currentUser.github || '');
+      setEducation(currentUser.education || '');
+      setAbout(currentUser.about || '');
     }
-  };
+  }, [currentUser]);
 
-  const handleUpdatePassword = async (e) => {
-    e.preventDefault();
-    if (profile.newPassword !== profile.confirmPassword) {
-      setMessage({ type: 'error', text: 'Пароли не совпадают!' });
-      return;
-    }
-    try {
-      await updatePassword(currentUser.id, profile.currentPassword, profile.newPassword);
-      setProfile(prev => ({
-        ...prev,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      }));
-      setMessage({ type: 'success', text: 'Пароль успешно обновлен!' });
-    } catch (err) {
-      setMessage({ type: 'error', text: err.message });
-    }
-  };
-
-  const handleAvatarClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleAvatarChange = async (e) => {
-    const file = e.target.files?.[0];
+  const handleAvatarChange = (event) => {
+    const file = event.target.files[0];
     if (file) {
-      try {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          await updateProfile(currentUser.id, { avatar: reader.result });
-          setMessage({ type: 'success', text: 'Аватар успешно обновлен!' });
-        };
-        reader.readAsDataURL(file);
-      } catch (err) {
-        setMessage({ type: 'error', text: 'Ошибка при обновлении аватара' });
-      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
+  };
+
+  const handleSave = () => {
+    const updatedUser = {
+      ...currentUser,
+      avatar,
+      name,
+      email,
+      github,
+      education,
+      about
+    };
+    updateUser(updatedUser);
+    setIsEditing(false);
   };
 
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Typography
-          variant="h4"
-          component="h1"
-          gutterBottom
-          sx={{
-            fontWeight: 600,
-            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-            backgroundClip: 'text',
-            textFillColor: 'transparent',
-            mb: 4,
-          }}
-        >
-          Профиль
-        </Typography>
+      <Paper sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+          <IconButton onClick={() => setIsEditing(!isEditing)}>
+            <EditIcon />
+          </IconButton>
+        </Box>
 
-        {message.text && (
-          <Alert 
-            severity={message.type} 
-            sx={{ mb: 3 }}
-            onClose={() => setMessage({ type: '', text: '' })}
-          >
-            {message.text}
-          </Alert>
-        )}
-
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            mb: 3,
-            borderRadius: 4,
-            background: theme.palette.mode === 'dark' 
-              ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 203, 243, 0.1) 100%)'
-              : 'white',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-            <Box sx={{ position: 'relative' }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
+            <input
+              accept="image/*"
+              type="file"
+              id="avatar-upload"
+              style={{ display: 'none' }}
+              onChange={handleAvatarChange}
+              disabled={!isEditing}
+            />
+            <label htmlFor="avatar-upload">
               <Avatar
-                src={currentUser?.avatar}
+                src={avatar}
                 sx={{
-                  width: 100,
-                  height: 100,
-                  bgcolor: 'primary.main',
-                  fontSize: '2.5rem',
+                  width: 200,
+                  height: 200,
+                  margin: '0 auto',
+                  cursor: isEditing ? 'pointer' : 'default'
                 }}
-              >
-                {!currentUser?.avatar && <FaUser />}
-              </Avatar>
-              <IconButton
-                onClick={handleAvatarClick}
-                sx={{
-                  position: 'absolute',
-                  bottom: 0,
-                  right: 0,
-                  bgcolor: 'background.paper',
-                  '&:hover': { bgcolor: 'background.paper' },
-                }}
-              >
-                <FaCamera />
-              </IconButton>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleAvatarChange}
-                accept="image/*"
-                style={{ display: 'none' }}
               />
-            </Box>
-            <Box sx={{ ml: 3 }}>
-              <Typography variant="h5" gutterBottom>
-                {currentUser?.name}
-              </Typography>
-              <Typography color="text.secondary">
-                {currentUser?.email}
-              </Typography>
-            </Box>
-          </Box>
+            </label>
+          </Grid>
 
-          <form onSubmit={handleUpdateProfile}>
-            <Typography variant="h6" gutterBottom>
-              Основная информация
-            </Typography>
+          <Grid item xs={12} md={8}>
             <TextField
               fullWidth
               label="Имя"
-              name="name"
-              value={profile.name}
-              onChange={handleChange}
-              sx={{ mb: 2 }}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              disabled={!isEditing}
+              margin="normal"
             />
             <TextField
               fullWidth
               label="Email"
-              value={currentUser?.email}
-              disabled
-              sx={{ mb: 3 }}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={!isEditing}
+              margin="normal"
             />
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{
-                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
+            <TextField
+              fullWidth
+              label="GitHub"
+              value={github}
+              onChange={(e) => setGithub(e.target.value)}
+              disabled={!isEditing}
+              margin="normal"
+              InputProps={{
+                startAdornment: <GitHubIcon sx={{ mr: 1 }} />
               }}
-            >
-              Обновить профиль
-            </Button>
-          </form>
-        </Paper>
+            />
+            <TextField
+              fullWidth
+              label="Образование"
+              value={education}
+              onChange={(e) => setEducation(e.target.value)}
+              disabled={!isEditing}
+              margin="normal"
+            />
+            <TextField
+              fullWidth
+              label="О себе"
+              value={about}
+              onChange={(e) => setAbout(e.target.value)}
+              disabled={!isEditing}
+              margin="normal"
+              multiline
+              rows={4}
+            />
+          </Grid>
+        </Grid>
 
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            borderRadius: 4,
-            background: theme.palette.mode === 'dark' 
-              ? 'linear-gradient(135deg, rgba(33, 150, 243, 0.1) 0%, rgba(33, 203, 243, 0.1) 100%)'
-              : 'white',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-          }}
-        >
-          <form onSubmit={handleUpdatePassword}>
-            <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FaKey /> Изменить пароль
-            </Typography>
-            <TextField
-              fullWidth
-              type="password"
-              label="Текущий пароль"
-              name="currentPassword"
-              value={profile.currentPassword}
-              onChange={handleChange}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              type="password"
-              label="Новый пароль"
-              name="newPassword"
-              value={profile.newPassword}
-              onChange={handleChange}
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              fullWidth
-              type="password"
-              label="Подтвердите новый пароль"
-              name="confirmPassword"
-              value={profile.confirmPassword}
-              onChange={handleChange}
-              sx={{ mb: 3 }}
-            />
+        {isEditing && (
+          <Box sx={{ mt: 3, textAlign: 'right' }}>
             <Button
-              type="submit"
               variant="contained"
-              sx={{
-                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
-              }}
+              color="primary"
+              onClick={handleSave}
+              sx={{ ml: 2 }}
             >
-              Обновить пароль
+              Сохранить изменения
             </Button>
-          </form>
-        </Paper>
-      </motion.div>
+          </Box>
+        )}
+
+        {!isEditing && github && (
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="h6" gutterBottom>
+              Проекты на GitHub
+            </Typography>
+            <Link
+              href={github}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ display: 'flex', alignItems: 'center' }}
+            >
+              <GitHubIcon sx={{ mr: 1 }} />
+              {github}
+            </Link>
+          </Box>
+        )}
+      </Paper>
     </Container>
   );
 };

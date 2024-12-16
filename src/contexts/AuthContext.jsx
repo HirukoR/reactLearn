@@ -43,13 +43,22 @@ export const AuthProvider = ({ children }) => {
       id: Date.now().toString(),
       name: userData.name,
       email: userData.email,
-      password: userData.password, // В реальном приложении пароль должен быть захеширован
+      password: userData.password,
       avatar: null,
+      github: '',
+      education: '',
+      about: '',
+      projects: [],
       createdAt: new Date().toISOString(),
     };
 
-    setUsers(prevUsers => [...prevUsers, newUser]);
+    setUsers(prevUsers => {
+      const updatedUsers = [...prevUsers, newUser];
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+      return updatedUsers;
+    });
     setCurrentUser(newUser);
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
     navigate('/dashboard');
   };
 
@@ -58,7 +67,6 @@ export const AuthProvider = ({ children }) => {
     if (!user) {
       throw new Error('Неверный email или пароль');
     }
-
     setCurrentUser(user);
     navigate('/dashboard');
   };
@@ -68,27 +76,16 @@ export const AuthProvider = ({ children }) => {
     navigate('/login');
   };
 
-  const updateProfile = (userId, updates) => {
-    setUsers(prevUsers =>
-      prevUsers.map(user =>
-        user.id === userId
-          ? { ...user, ...updates }
-          : user
-      )
-    );
-
-    if (currentUser?.id === userId) {
-      setCurrentUser(prev => ({ ...prev, ...updates }));
-    }
-  };
-
-  const updatePassword = (userId, currentPassword, newPassword) => {
-    const user = users.find(u => u.id === userId);
-    if (!user || user.password !== currentPassword) {
-      throw new Error('Текущий пароль неверен');
-    }
-
-    updateProfile(userId, { password: newPassword });
+  const updateUser = (updatedUserData) => {
+    setCurrentUser(updatedUserData);
+    setUsers(prevUsers => {
+      const updatedUsers = prevUsers.map(user => 
+        user.id === updatedUserData.id ? updatedUserData : user
+      );
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+      return updatedUsers;
+    });
+    localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUserData));
   };
 
   const value = {
@@ -97,8 +94,7 @@ export const AuthProvider = ({ children }) => {
     register,
     login,
     logout,
-    updateProfile,
-    updatePassword,
+    updateUser
   };
 
   return (
@@ -109,9 +105,7 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth должен использоваться внутри AuthProvider');
-  }
-  return context;
+  return useContext(AuthContext);
 };
+
+export default AuthContext;

@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
+import Calendar from './pages/Calendar';
 import MainLayout from './layouts/MainLayout';
 import { ThemeProvider as CustomThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -98,6 +99,16 @@ const App = () => {
             element={
               currentUser ? (
                 <Profile />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="calendar"
+            element={
+              currentUser ? (
+                <Calendar />
               ) : (
                 <Navigate to="/login" replace />
               )
